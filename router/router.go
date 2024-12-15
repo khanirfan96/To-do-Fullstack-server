@@ -6,7 +6,10 @@ import (
 )
 
 func Router() *mux.Router {
-	router := mux.NewRouter()
+	route := mux.NewRouter()
+
+	router := route.PathPrefix("/api").Subrouter()
+
 	router.HandleFunc("/gettodo", middleware.GetTodo).Methods("GET", "OPTIONS")
 	router.HandleFunc("/posttodo", middleware.CreateTodo).Methods("POST", "OPTIONS")
 	router.HandleFunc("/puttodo/{id}", middleware.UpdateTodo).Methods("PUT", "OPTIONS")
