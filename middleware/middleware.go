@@ -57,17 +57,13 @@ func createDBINstance() {
 }
 
 func GetTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Context-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
 	payload := getAllTasks()
 	json.NewEncoder(w).Encode(payload)
 }
 
 func CreateTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Method", "POST")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
 	var task models.ToDoList
 	json.NewDecoder(r.Body).Decode(&task)
@@ -76,10 +72,7 @@ func CreateTodo(w http.ResponseWriter, r *http.Request) {
 
 }
 func UpdateTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Method", "PUT")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(r)
 	taskComplete(params["id"])
@@ -87,20 +80,14 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 
 }
 func UndoTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Method", "PUT")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(r)
 	undoTask(params["id"])
 	json.NewEncoder(w).Encode(params["id"])
 }
 func DeleteOneTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Method", "PUT")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(r)
 	deleteOneTask(params["id"])
@@ -108,8 +95,7 @@ func DeleteOneTodo(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteAllTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "application/json")
 
 	count := deleteAllTask()
 	json.NewEncoder(w).Encode(count)
