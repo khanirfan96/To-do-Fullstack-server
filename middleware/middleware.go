@@ -71,14 +71,42 @@ func CreateTodo(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(task)
 
 }
+
 func UpdateTodo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	params := mux.Vars(r)
-	taskComplete(params["id"])
-	json.NewEncoder(w).Encode(params["id"])
+	id, ok := params["id"]
+	if !ok {
+		http.Error(w, "ID parameter is missing", http.StatusBadRequest)
+		return
+	}
 
+	// Parse request body to get newTask value
+	var body struct {
+		NewTask string `json:"task"`
+	}
+	err := json.NewDecoder(r.Body).Decode(&body)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Call taskComplete with both arguments
+	err = taskComplete(id, body.NewTask)
+	if err != nil {
+		http.Error(w, "Failed to update task: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with success
+	response := map[string]string{
+		"id":      id,
+		"message": "Task updated successfully",
+	}
+	json.NewEncoder(w).Encode(response)
 }
+
 func UndoTodo(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -123,15 +151,25 @@ func getAllTasks() []primitive.M {
 	return results
 }
 
-func taskComplete(task string) {
-	id, _ := primitive.ObjectIDFromHex(task)
+func taskComplete(task string, newTask string) error {
+	id, err := primitive.ObjectIDFromHex(task)
+	if err != nil {
+		return fmt.Errorf("invalid ID: %v", err)
+	}
+
 	filter := bson.M{"_id": id}
-	update := bson.M{"$set": bson.M{"status": true}}
+	update := bson.M{"$set": bson.M{"status": true, "task": newTask}} // Also update the task description
+
 	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to update task: %v", err)
 	}
-	fmt.Println("Modified Count: ", result.ModifiedCount)
+
+	if result.ModifiedCount == 0 {
+		return fmt.Errorf("no document matched the given ID")
+	}
+
+	return nil // Indicate success
 }
 
 func insertOneTask(task models.ToDoList) {

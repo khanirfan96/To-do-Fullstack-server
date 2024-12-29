@@ -21,13 +21,12 @@ func Router() http.Handler {
 	router.HandleFunc("/deletetodo", middleware.DeleteAllTodo).Methods("DELETE")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"}, // Allow all origins
+		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"*"}, // Allow all headers
-		Debug:          true,          // Enable debugging for testing, remove in production
+		AllowedHeaders: []string{"*"},
+		Debug:          true,
 	})
 
-	// Wrap the router with the CORS handler
 	corsHandle := c.Handler(router)
 
 	return corsHandle
