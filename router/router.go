@@ -1,33 +1,28 @@
 package router
 
 import (
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/khanirfan96/To-do-Fullstack.git/middleware"
-	"github.com/rs/cors"
 )
 
-func Router() http.Handler {
-	route := mux.NewRouter()
+func Router() *fiber.App {
+	app := fiber.New()
 
-	router := route.PathPrefix("/api").Subrouter()
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
+		AllowHeaders: "*",
+	}))
 
-	router.HandleFunc("/gettodo", middleware.GetTodo).Methods("GET")
-	router.HandleFunc("/posttodo", middleware.CreateTodo).Methods("POST")
-	router.HandleFunc("/puttodo/{id}", middleware.UpdateTodo).Methods("PUT")
-	router.HandleFunc("/undotodo/{id}", middleware.UndoTodo).Methods("PUT")
-	router.HandleFunc("/deleteonetodo/{id}", middleware.DeleteOneTodo).Methods("DELETE")
-	router.HandleFunc("/deletetodo", middleware.DeleteAllTodo).Methods("DELETE")
+	api := app.Group("/api")
 
-	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"*"},
-		Debug:          true,
-	})
+	api.Get("/gettodo", middleware.GetTodo)
+	api.Post("/posttodo", middleware.CreateTodo)
+	api.Put("/puttodo/:id", middleware.UpdateTodo)
+	api.Put("/undotodo/:id", middleware.UndoTodo)
+	api.Delete("/deleteonetodo/:id", middleware.DeleteOneTodo)
+	api.Delete("/deletetodo", middleware.DeleteAllTodo)
 
-	corsHandle := c.Handler(router)
-
-	return corsHandle
+	return app
 }

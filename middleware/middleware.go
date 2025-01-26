@@ -2,13 +2,11 @@ package middleware
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
+	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	"github.com/khanirfan96/To-do-Fullstack.git/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,7 +24,6 @@ func init() {
 
 func loadTheEnv() {
 	err := godotenv.Load(".env")
-
 	if err != nil {
 		log.Fatal("Error in dotEnv File")
 	}
@@ -38,15 +35,12 @@ func createDBINstance() {
 	collectionName := os.Getenv("DB_COLLECTION_NAME")
 
 	clientOptions := options.Client().ApplyURI(connectionString)
-
 	client, err := mongo.Connect(context.TODO(), clientOptions)
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	err = client.Ping(context.TODO(), nil)
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,78 +50,61 @@ func createDBINstance() {
 	fmt.Println("Collection instance created...", collection)
 }
 
-func GetTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func GetTodo(c *fiber.Ctx) error {
 	payload := getAllTasks()
-	json.NewEncoder(w).Encode(payload)
+	return c.JSON(payload)
 }
 
-func CreateTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
+func CreateTodo(c *fiber.Ctx) error {
 	var task models.ToDoList
-	json.NewDecoder(r.Body).Decode(&task)
+	if err := c.BodyParser(&task); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Cannot parse JSON",
+		})
+	}
 	insertOneTask(task)
-	json.NewEncoder(w).Encode(task)
-
+	return c.JSON(task)
 }
 
-func UpdateTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	params := mux.Vars(r)
-	id, ok := params["id"]
-	if !ok {
-		http.Error(w, "ID parameter is missing", http.StatusBadRequest)
-		return
-	}
-
-	// Parse request body to get newTask value
+func UpdateTodo(c *fiber.Ctx) error {
+	id := c.Params("id")
 	var body struct {
 		NewTask string `json:"task"`
 	}
-	err := json.NewDecoder(r.Body).Decode(&body)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
+
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid request body",
+		})
 	}
 
-	// Call taskComplete with both arguments
-	err = taskComplete(id, body.NewTask)
-	if err != nil {
-		http.Error(w, "Failed to update task: "+err.Error(), http.StatusInternalServerError)
-		return
+	if err := taskComplete(id, body.NewTask); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to update task: %v", err),
+		})
 	}
 
-	// Respond with success
-	response := map[string]string{
+	return c.JSON(fiber.Map{
 		"id":      id,
 		"message": "Task updated successfully",
-	}
-	json.NewEncoder(w).Encode(response)
+	})
 }
 
-func UndoTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	params := mux.Vars(r)
-	undoTask(params["id"])
-	json.NewEncoder(w).Encode(params["id"])
-}
-func DeleteOneTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	params := mux.Vars(r)
-	deleteOneTask(params["id"])
-	json.NewEncoder(w).Encode(params["id"])
+func UndoTodo(c *fiber.Ctx) error {
+	id := c.Params("id")
+	undoTask(id)
+	return c.JSON(id)
 }
 
-func DeleteAllTodo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+func DeleteOneTodo(c *fiber.Ctx) error {
+	id := c.Params("id")
+	deleteOneTask(id)
+	return c.JSON(id)
+}
 
+func DeleteAllTodo(c *fiber.Ctx) error {
 	count := deleteAllTask()
-	json.NewEncoder(w).Encode(count)
-
+	return c.JSON(count)
 }
 
 func getAllTasks() []primitive.M {
@@ -158,7 +135,7 @@ func taskComplete(task string, newTask string) error {
 	}
 
 	filter := bson.M{"_id": id}
-	update := bson.M{"$set": bson.M{"status": true, "task": newTask}} // Also update the task description
+	update := bson.M{"$set": bson.M{"status": true, "task": newTask}}
 
 	result, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
@@ -169,7 +146,7 @@ func taskComplete(task string, newTask string) error {
 		return fmt.Errorf("no document matched the given ID")
 	}
 
-	return nil // Indicate success
+	return nil
 }
 
 func insertOneTask(task models.ToDoList) {
@@ -198,7 +175,7 @@ func deleteOneTask(task string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Delected Task: ", deletedID)
+	fmt.Println("Deleted Task: ", deletedID)
 }
 
 func deleteAllTask() int64 {
@@ -206,6 +183,6 @@ func deleteAllTask() int64 {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Deleted All The Task: ", deletedAll.DeletedCount)
+	fmt.Println("Deleted All Tasks: ", deletedAll.DeletedCount)
 	return deletedAll.DeletedCount
 }
