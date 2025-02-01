@@ -7,3 +7,11 @@ type ToDoList struct {
 	Task   string             `json:"task,omitempty"`
 	Status bool               `json:"status,omitempty"`
 }
+
+type CalorieTracker struct {
+	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Dish        *string            `json:"dish"`
+	Ingredients *string            `json:"ingredients"`
+	Calories    *int64             `json:"calorie"`
+	Fat         *int64             `json:"fat"`
+}

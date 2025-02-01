@@ -16,6 +16,7 @@ func Router() *fiber.App {
 	}))
 
 	api := app.Group("/api")
+	recipeapi := app.Group("/recipe")
 
 	api.Get("/gettodo", middleware.GetTodo)
 	api.Post("/posttodo", middleware.CreateTodo)
@@ -23,6 +24,15 @@ func Router() *fiber.App {
 	api.Put("/undotodo/:id", middleware.UndoTodo)
 	api.Delete("/deleteonetodo/:id", middleware.DeleteOneTodo)
 	api.Delete("/deletetodo", middleware.DeleteAllTodo)
+
+	// *********************** recipe API ******************************
+
+	recipeapi.Get("/getrecipe", middleware.GetRecipe)
+	recipeapi.Post("/postrecipe", middleware.CreateRecipe)
+	recipeapi.Put("/putrecipe/:id", middleware.UpdateRecipe)
+	recipeapi.Put("/putingredients/:id", middleware.UpdateIngredeints)
+	recipeapi.Delete("/deleterecipe/:id", middleware.DeleteOneRecipe)
+	recipeapi.Delete("/deleterecipe", middleware.DeleteAllRecipe)
 
 	return app
 }
