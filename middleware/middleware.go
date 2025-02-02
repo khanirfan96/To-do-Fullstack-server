@@ -133,7 +133,6 @@ func getAllTasks(coll *mongo.Collection) []primitive.M {
 		if e != nil {
 			log.Fatal(e)
 		}
-		fmt.Println("result", result)
 		results = append(results, result)
 	}
 	if err := cursor.Err(); err != nil {
