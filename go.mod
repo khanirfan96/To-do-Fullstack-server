@@ -1,4 +1,4 @@
-module github.com/khanirfan96/To-do-Fullstack.git
+module github.com/khanirfan96/To-do-Fullstack-server
 
 go 1.23.3
 

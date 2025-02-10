@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/khanirfan96/To-do-Fullstack.git/middleware"
+	"github.com/khanirfan96/To-do-Fullstack-server/middleware"
 )
 
 func Router() *fiber.App {
