@@ -307,15 +307,15 @@ func deleteOneRecipe(id string, recipeColl *mongo.Collection) {
 func UpdateRecipe(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	var body models.CalorieTracker
+	var request models.CalorieTrackerRequest
 
-	if err := c.BodyParser(&body); err != nil {
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
 	}
 
-	modifiedCount, err := updateRecipe(id, body, calorieCollection)
+	modifiedCount, err := updateRecipe(id, request.Task, calorieCollection)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -338,11 +338,6 @@ func updateRecipe(id string, body models.CalorieTracker, recipeColl *mongo.Colle
 
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
-	fmt.Println("body", body)
-	fmt.Println("dish", body.Dish)
-	fmt.Println("fat", body.Fat)
-	fmt.Print("Calories", body.Calories)
-
 	update := bson.M{
 		"$set": bson.M{
 			"dish":        body.Dish,
@@ -355,13 +350,14 @@ func updateRecipe(id string, body models.CalorieTracker, recipeColl *mongo.Colle
 	if err != nil {
 		return 0, err
 	}
+
 	return result.ModifiedCount, nil
 }
 
 func UpdateIngredeints(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	var ingredients models.CalorieTracker
+	var ingredients models.CalorieTrackerRequest
 
 	if err := c.BodyParser(&ingredients); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -369,7 +365,7 @@ func UpdateIngredeints(c *fiber.Ctx) error {
 		})
 	}
 
-	modifiedIngredient, err := updateIngredients(id, ingredients, calorieCollection)
+	modifiedIngredient, err := updateIngredients(id, ingredients.Task, calorieCollection)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
