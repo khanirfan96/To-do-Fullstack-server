@@ -3,6 +3,7 @@ package router
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	controller "github.com/khanirfan96/To-do-Fullstack-server/controller"
 	"github.com/khanirfan96/To-do-Fullstack-server/middleware"
 )
 
@@ -15,8 +16,11 @@ func Router() *fiber.App {
 		AllowHeaders: "*",
 	}))
 
-	api := app.Group("/api")
-	recipeapi := app.Group("/recipe")
+	app.Post("/users/signup", controller.SignUp())
+	app.Post("/users/login", controller.Login())
+
+	api := app.Group("/api", middleware.Authentication())
+	recipeapi := app.Group("/recipe", middleware.Authentication())
 
 	api.Get("/gettodo", middleware.GetTodo)
 	api.Post("/posttodo", middleware.CreateTodo)

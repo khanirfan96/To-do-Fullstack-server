@@ -4,68 +4,24 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/joho/godotenv"
+	"github.com/khanirfan96/To-do-Fullstack-server/database"
 	"github.com/khanirfan96/To-do-Fullstack-server/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-)
-
-// var collection *mongo.Collection
-
-var (
-	todoCollection    *mongo.Collection
-	calorieCollection *mongo.Collection
 )
 
 func init() {
-	loadTheEnv()
-	createDBINstance()
-}
-
-func loadTheEnv() {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Fatal("Error in dotEnv File")
+	if err := database.Initialize(); err != nil {
+		log.Fatal("Failed to initialize database:", err)
 	}
-}
-
-func createDBINstance() {
-	connectionString := os.Getenv("DB_URI")
-	dbName := os.Getenv("DB_NAME")
-	// collectionName := os.Getenv("DB_COLLECTION_NAME")
-
-	clientOptions := options.Client().ApplyURI(connectionString)
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Connected to MongoDB!")
-
-	todoCollection = client.Database(dbName).Collection("todolist")
-	calorieCollection = client.Database(dbName).Collection("calorietracker")
-
-	fmt.Println("Connected to mongoDB!")
-	fmt.Println("Collection instances created...")
-	// collection = client.Database(dbName).Collection(collectionName)
-	fmt.Printf("Todo Collection: %v\n", todoCollection.Name())
-	fmt.Printf("Calorie Collection: %v\n", calorieCollection.Name())
-	// fmt.Println("Collection instance created...", collection)
 }
 
 func GetTodo(c *fiber.Ctx) error {
-	payload := getAllTasks(todoCollection)
+	payload := getAllTasks(database.DB.TodoCollection)
 	return c.JSON(payload)
 }
 
@@ -76,7 +32,7 @@ func CreateTodo(c *fiber.Ctx) error {
 			"error": "Cannot parse JSON",
 		})
 	}
-	insertOneTask(task, todoCollection)
+	insertOneTask(task, database.DB.TodoCollection)
 	return c.JSON(task)
 }
 
@@ -92,7 +48,7 @@ func UpdateTodo(c *fiber.Ctx) error {
 		})
 	}
 
-	if err := taskComplete(id, body.NewTask, todoCollection); err != nil {
+	if err := taskComplete(id, body.NewTask, database.DB.TodoCollection); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": fmt.Sprintf("Failed to update task: %v", err),
 		})
@@ -106,18 +62,18 @@ func UpdateTodo(c *fiber.Ctx) error {
 
 func UndoTodo(c *fiber.Ctx) error {
 	id := c.Params("id")
-	undoTask(id, todoCollection)
+	undoTask(id, database.DB.TodoCollection)
 	return c.JSON(id)
 }
 
 func DeleteOneTodo(c *fiber.Ctx) error {
 	id := c.Params("id")
-	deleteOneTask(id, todoCollection)
+	deleteOneTask(id, database.DB.TodoCollection)
 	return c.JSON(id)
 }
 
 func DeleteAllTodo(c *fiber.Ctx) error {
-	count := deleteAllTask(todoCollection)
+	count := deleteAllTask(database.DB.TodoCollection)
 	return c.JSON(count)
 }
 
@@ -204,7 +160,7 @@ func deleteAllTask(coll *mongo.Collection) int64 {
 //**************************CalorieTracker Api Methods**********************************************
 
 func GetRecipe(c *fiber.Ctx) error {
-	payload := getAllCalories(calorieCollection)
+	payload := getAllCalories(database.DB.CalorieCollection)
 	return c.Status(fiber.StatusOK).JSON(payload)
 }
 
@@ -239,7 +195,7 @@ func CreateRecipe(c *fiber.Ctx) error {
 			"error": "Cannot parse json",
 		})
 	}
-	insertOneRecipe(recipe, calorieCollection)
+	insertOneRecipe(recipe, database.DB.CalorieCollection)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Recipe created successfully",
 		"id":      recipe,
@@ -257,7 +213,7 @@ func insertOneRecipe(recipe models.CalorieTracker, recipeColl *mongo.Collection)
 }
 
 func DeleteAllRecipe(c *fiber.Ctx) error {
-	count := deleteAllRecipe(calorieCollection)
+	count := deleteAllRecipe(database.DB.CalorieCollection)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"Message": "All Entries Deleted",
 		"Count":   count,
@@ -279,7 +235,7 @@ func deleteAllRecipe(recipeColl *mongo.Collection) int64 {
 func DeleteOneRecipe(c *fiber.Ctx) error {
 	id := c.Params("id")
 	fmt.Println("id", id)
-	deleteOneRecipe(id, calorieCollection)
+	deleteOneRecipe(id, database.DB.CalorieCollection)
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"Message": fmt.Sprintf("Deleted entry with ID: %s", id),
 		"ID":      id,
@@ -315,7 +271,7 @@ func UpdateRecipe(c *fiber.Ctx) error {
 		})
 	}
 
-	modifiedCount, err := updateRecipe(id, request.Task, calorieCollection)
+	modifiedCount, err := updateRecipe(id, request.Task, database.DB.CalorieCollection)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -365,7 +321,7 @@ func UpdateIngredeints(c *fiber.Ctx) error {
 		})
 	}
 
-	modifiedIngredient, err := updateIngredients(id, ingredients.Task, calorieCollection)
+	modifiedIngredient, err := updateIngredients(id, ingredients.Task, database.DB.CalorieCollection)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
