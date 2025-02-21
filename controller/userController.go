@@ -41,7 +41,7 @@ func VerifyPassword(userPassword string, providedPassword string) (bool, string)
 	msg := ""
 
 	if err != nil {
-		msg = fmt.Sprintf("login or passowrd is incorrect")
+		msg = "login or passowrd is incorrect"
 		check = false
 	}
 
@@ -70,7 +70,10 @@ func SignUp() fiber.Handler {
 		if err != nil {
 			log.Panic(err)
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "error occured while checking for the email"})
+		}
 
+		if count > 0 {
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "This email already exists"})
 		}
 
 		password := HashPassword(*user.Password)
@@ -81,12 +84,10 @@ func SignUp() fiber.Handler {
 		if err != nil {
 			log.Panic(err)
 			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "error occured while checking for the phone number"})
-
 		}
 
 		if count > 0 {
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "this email or phone number already exists"})
-
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "This phone number already exists"})
 		}
 
 		user.Created_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
@@ -99,8 +100,7 @@ func SignUp() fiber.Handler {
 
 		resultInsertionNumber, insertErr := database.DB.UserCollection.InsertOne(ctx, user)
 		if insertErr != nil {
-			msg := fmt.Sprintf("User item was not created")
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": msg})
+			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": "User item was not created"})
 
 		}
 
@@ -109,48 +109,52 @@ func SignUp() fiber.Handler {
 	}
 }
 
-// Login is the api used to tget a single user
+// controller/userController.go
 func Login() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
+
+		// Check if UserCollection is initialized
+		if database.DB.UserCollection == nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database not properly initialized"})
+		}
+
 		var user models.User
 		var foundUser models.User
 
 		if err := c.BodyParser(&user); err != nil {
-			return c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
 		}
 
 		if user.Email == nil || user.Password == nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Email and password are required",
-			})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Email and password are required"})
 		}
 
 		err := database.DB.UserCollection.FindOne(ctx, bson.M{"email": user.Email}).Decode(&foundUser)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-					"error": "Invalid email or password",
-				})
+				return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid email or password"})
 			}
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Database error",
-			})
-
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
 		}
 
 		passwordIsValid, msg := VerifyPassword(*user.Password, *foundUser.Password)
 		if !passwordIsValid {
-			return c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": msg})
-
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": msg})
 		}
 
-		token, refreshToken, _ := helper.GenerateAllTokens(*foundUser.Email, *foundUser.First_name, *foundUser.Last_name, foundUser.User_id)
+		token, refreshToken, err := helper.GenerateAllTokens(*foundUser.Email, *foundUser.First_name, *foundUser.Last_name, foundUser.User_id)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate tokens"})
+		}
 
-		helper.UpdateAllTokens(token, refreshToken, foundUser.User_id)
+		if err := helper.UpdateAllTokens(token, refreshToken, foundUser.User_id); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": fmt.Sprintf("Failed to update tokens: %v", err),
+			})
+		}
 
-		return c.Status(http.StatusOK).JSON(fiber.Map{"data": foundUser})
-
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{"user": foundUser})
 	}
 }

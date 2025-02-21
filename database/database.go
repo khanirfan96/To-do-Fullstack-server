@@ -81,6 +81,7 @@ func setupCollections() {
 	fmt.Printf("Collections initialized:\n")
 	fmt.Printf("- Todo Collection: %v\n", DB.TodoCollection.Name())
 	fmt.Printf("- Calorie Collection: %v\n", DB.CalorieCollection.Name())
+	fmt.Printf("- User Collection: %v\n", DB.UserCollection.Name())
 }
 
 // GetContext returns a context with timeout
