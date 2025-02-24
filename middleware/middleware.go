@@ -294,6 +294,11 @@ func updateRecipe(id string, body models.CalorieTracker, recipeColl *mongo.Colle
 
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
+	fmt.Println("body", body)
+	fmt.Println("dish", body.Dish)
+	fmt.Println("ingredients", body.Fat)
+	fmt.Println("fat", body.Ingredients)
+	fmt.Println("fat", body.Calories)
 	update := bson.M{
 		"$set": bson.M{
 			"dish":        body.Dish,
