@@ -263,7 +263,7 @@ func deleteOneRecipe(id string, recipeColl *mongo.Collection) {
 func UpdateRecipe(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	var request models.CalorieTrackerRequest
+	var request models.CalorieTracker
 
 	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -271,7 +271,7 @@ func UpdateRecipe(c *fiber.Ctx) error {
 		})
 	}
 
-	modifiedCount, err := updateRecipe(id, request.Task, database.DB.CalorieCollection)
+	modifiedCount, err := updateRecipe(id, request, database.DB.CalorieCollection)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -318,7 +318,7 @@ func updateRecipe(id string, body models.CalorieTracker, recipeColl *mongo.Colle
 func UpdateIngredeints(c *fiber.Ctx) error {
 	id := c.Params("id")
 
-	var ingredients models.CalorieTrackerRequest
+	var ingredients models.CalorieTracker
 
 	if err := c.BodyParser(&ingredients); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -326,7 +326,7 @@ func UpdateIngredeints(c *fiber.Ctx) error {
 		})
 	}
 
-	modifiedIngredient, err := updateIngredients(id, ingredients.Task, database.DB.CalorieCollection)
+	modifiedIngredient, err := updateIngredients(id, ingredients, database.DB.CalorieCollection)
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
