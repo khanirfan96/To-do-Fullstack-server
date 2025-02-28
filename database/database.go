@@ -16,6 +16,7 @@ type DBCollections struct {
 	TodoCollection    *mongo.Collection
 	CalorieCollection *mongo.Collection
 	UserCollection    *mongo.Collection
+	GymCollection     *mongo.Collection
 }
 
 var (
@@ -76,12 +77,14 @@ func setupCollections() {
 		TodoCollection:    database.Collection("todolist"),
 		CalorieCollection: database.Collection("calorietracker"),
 		UserCollection:    database.Collection("user"),
+		GymCollection:     database.Collection("gym"),
 	}
 
 	fmt.Printf("Collections initialized:\n")
 	fmt.Printf("- Todo Collection: %v\n", DB.TodoCollection.Name())
 	fmt.Printf("- Calorie Collection: %v\n", DB.CalorieCollection.Name())
 	fmt.Printf("- User Collection: %v\n", DB.UserCollection.Name())
+	fmt.Printf("- Gym Collection: %v\n", DB.GymCollection.Name())
 }
 
 // GetContext returns a context with timeout

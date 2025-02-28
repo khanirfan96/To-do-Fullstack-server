@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	controller "github.com/khanirfan96/To-do-Fullstack-server/controller"
 	"github.com/khanirfan96/To-do-Fullstack-server/database"
 	"github.com/khanirfan96/To-do-Fullstack-server/models"
 	"go.mongodb.org/mongo-driver/bson"
@@ -157,6 +158,94 @@ func deleteAllTask(coll *mongo.Collection) int64 {
 	return deletedAll.DeletedCount
 }
 
+//**************************GymSchedule Api Methods**********************************************
+
+func GetGym(c *fiber.Ctx) error {
+	payload := getAllGymSchedule(database.DB.GymCollection)
+	return c.Status(fiber.StatusOK).JSON(payload)
+}
+
+func getAllGymSchedule(gymcoll *mongo.Collection) []primitive.M {
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+
+	cursor, err := gymcoll.Find(ctx, bson.D{{}})
+	if err != nil {
+		log.Fatal(err)
+	}
+	var gym []primitive.M
+	for cursor.Next(ctx) {
+		var gymschedule bson.M
+		e := cursor.Decode(&gymschedule)
+		if e != nil {
+			log.Fatal(e)
+		}
+		gym = append(gym, gymschedule)
+	}
+	if err := cursor.Err(); err != nil {
+		log.Fatal(err)
+	}
+	defer cancel()
+	return gym
+}
+
+// **************************Change Password Methods**********************************************
+func UpdatePassword(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	var password models.User
+	var userpassword models.User
+
+	if err := c.BodyParser(&password); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid password body",
+		})
+	}
+
+	passwordIsValid, msg := controller.VerifyPassword(*userpassword.Password, *password.Password)
+	if !passwordIsValid {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": msg})
+	}
+
+	passwordupdate, err := updatepassword(id, password, database.DB.UserCollection)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Failed to update recipe: %v", err),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"id":      id,
+		"message": "Password is updated succesfully!",
+		"updated": passwordupdate,
+	})
+
+}
+
+func updatepassword(id string, password string, usercoll *mongo.Collection) (int64, error) {
+	userId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return 0, fmt.Errorf("invalid user ID format")
+	}
+
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+	update := bson.M{
+		"$set": bson.M{
+			"dish":        body.Dish,
+			"ingredients": body.Ingredients,
+			"calories":    body.Calories,
+			"fat":         body.Fat,
+		},
+	}
+	result, err := userColl.UpdateOne(ctx, bson.M{"_id": userId}, update)
+	if err != nil {
+		return 0, err
+	}
+
+	return result.ModifiedCount, nil
+}
+
 //**************************CalorieTracker Api Methods**********************************************
 
 func GetRecipe(c *fiber.Ctx) error {
@@ -294,11 +383,6 @@ func updateRecipe(id string, body models.CalorieTracker, recipeColl *mongo.Colle
 
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
-	fmt.Println("body", body)
-	fmt.Println("dish", body.Dish)
-	fmt.Println("ingredients", body.Fat)
-	fmt.Println("fat", body.Ingredients)
-	fmt.Println("fat", body.Calories)
 	update := bson.M{
 		"$set": bson.M{
 			"dish":        body.Dish,

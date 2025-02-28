@@ -32,3 +32,19 @@ type User struct {
 	Updated_at    time.Time          `json:"updated_at"`
 	User_id       string             `json:"user_id"`
 }
+
+type UserPassword struct {
+	User_id  string  `json:"user_id"`
+	Password *string `json:"password" validate:"required,min=8"`
+}
+
+type Gym struct {
+	ID        primitive.ObjectID `bson:"_id"`
+	Monday    *string            `json:"monday"`
+	Tuesday   *string            `json:"tuesday"`
+	Wednesday *string            `json:"wednesday"`
+	Thursday  *string            `json:"thursday"`
+	Friday    *string            `json:"friday"`
+	Saturday  *string            `json:"saturday"`
+	Sunday    *string            `json:"sunday"`
+}
