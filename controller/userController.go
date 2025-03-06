@@ -36,7 +36,7 @@ func HashPassword(password string) string {
 
 // VerifyPassword checks the input password while verifying it with the passward in the DB.
 func VerifyPassword(userPassword string, providedPassword string) (bool, string) {
-	err := bcrypt.CompareHashAndPassword([]byte(providedPassword), []byte(userPassword))
+	err := bcrypt.CompareHashAndPassword([]byte(userPassword), []byte(providedPassword))
 	check := true
 	msg := ""
 
@@ -139,7 +139,7 @@ func Login() fiber.Handler {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
 		}
 
-		passwordIsValid, msg := VerifyPassword(*user.Password, *foundUser.Password)
+		passwordIsValid, msg := VerifyPassword(*foundUser.Password, *user.Password)
 		if !passwordIsValid {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": msg})
 		}

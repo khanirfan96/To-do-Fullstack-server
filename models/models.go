@@ -34,8 +34,8 @@ type User struct {
 }
 
 type UserPassword struct {
-	User_id  string  `json:"user_id"`
-	Password *string `json:"password" validate:"required,min=8"`
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password" validate:"required,min=8"`
 }
 
 type Gym struct {

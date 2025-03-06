@@ -23,6 +23,12 @@ func Router() *fiber.App {
 	recipeapi := app.Group("/recipe", middleware.Authentication())
 	gymapi := app.Group("/gym", middleware.Authentication())
 
+	// *********************** changepassword routes ******************************
+
+	api.Put("/change-password/:id", middleware.UpdatePassword)
+
+	// *********************** todo routes ******************************
+
 	api.Get("/gettodo", middleware.GetTodo)
 	api.Post("/posttodo", middleware.CreateTodo)
 	api.Put("/puttodo/:id", middleware.UpdateTodo)
@@ -30,7 +36,7 @@ func Router() *fiber.App {
 	api.Delete("/deleteonetodo/:id", middleware.DeleteOneTodo)
 	api.Delete("/deletetodo", middleware.DeleteAllTodo)
 
-	// *********************** recipe API ******************************
+	// *********************** recipe routes ******************************
 
 	recipeapi.Get("/getrecipe", middleware.GetRecipe)
 	recipeapi.Post("/postrecipe", middleware.CreateRecipe)
@@ -39,7 +45,7 @@ func Router() *fiber.App {
 	recipeapi.Delete("/deleterecipe/:id", middleware.DeleteOneRecipe)
 	recipeapi.Delete("/deleterecipe", middleware.DeleteAllRecipe)
 
-	// *********************** gym API ******************************
+	// *********************** gym routes ******************************
 	gymapi.Get("/schedule", middleware.GetGym)
 
 	return app
