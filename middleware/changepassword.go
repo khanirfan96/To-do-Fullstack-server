@@ -77,6 +77,7 @@ func UpdatePassword(c *fiber.Ctx) error {
 		"id":      userID,
 		"message": "Password updated successfully!",
 		"updated": modifiedCount,
+		"status":  fiber.StatusOK,
 	})
 }
 
