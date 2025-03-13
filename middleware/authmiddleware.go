@@ -28,6 +28,8 @@ func Authentication() fiber.Handler {
 		c.Set("last_name", claims.Last_name)
 		c.Set("uid", claims.Uid)
 
+		c.Locals("Uid", claims.Uid)
+
 		return c.Next()
 
 	}

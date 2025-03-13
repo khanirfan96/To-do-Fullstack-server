@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/khanirfan96/To-do-Fullstack-server/database"
@@ -14,7 +15,8 @@ import (
 )
 
 func GetTodo(c *fiber.Ctx) error {
-	payload := getAllTasks(database.DB.TodoCollection)
+	uid := c.Locals("Uid").(string)
+	payload := getAllTasks(database.DB.TodoCollection, uid)
 	return c.JSON(payload)
 }
 
@@ -70,13 +72,17 @@ func DeleteAllTodo(c *fiber.Ctx) error {
 	return c.JSON(count)
 }
 
-func getAllTasks(coll *mongo.Collection) []primitive.M {
-	cursor, err := coll.Find(context.Background(), bson.D{{}})
+func getAllTasks(coll *mongo.Collection, id string) []primitive.M {
+
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	filter := bson.M{"user_id": id}
+
+	cursor, err := coll.Find(ctx, filter)
 	if err != nil {
 		log.Fatal(err)
 	}
 	var results []primitive.M
-	for cursor.Next(context.Background()) {
+	for cursor.Next(ctx) {
 		var result bson.M
 		e := cursor.Decode(&result)
 		if e != nil {
@@ -87,12 +93,14 @@ func getAllTasks(coll *mongo.Collection) []primitive.M {
 	if err := cursor.Err(); err != nil {
 		log.Fatal(err)
 	}
-	cursor.Close(context.Background())
+	defer cancel()
 	return results
 }
 
 func taskComplete(task string, newTask string, coll *mongo.Collection) error {
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	id, err := primitive.ObjectIDFromHex(task)
+	defer cancel()
 	if err != nil {
 		return fmt.Errorf("invalid ID: %v", err)
 	}
@@ -100,7 +108,7 @@ func taskComplete(task string, newTask string, coll *mongo.Collection) error {
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": bson.M{"status": true, "task": newTask}}
 
-	result, err := coll.UpdateOne(context.Background(), filter, update)
+	result, err := coll.UpdateOne(ctx, filter, update)
 	if err != nil {
 		return fmt.Errorf("failed to update task: %v", err)
 	}
@@ -113,39 +121,47 @@ func taskComplete(task string, newTask string, coll *mongo.Collection) error {
 }
 
 func insertOneTask(task models.ToDoList, coll *mongo.Collection) {
-	insertResult, err := coll.InsertOne(context.Background(), task)
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	insertResult, err := coll.InsertOne(ctx, task)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer cancel()
 	fmt.Println("Inserted a single record: ", insertResult.InsertedID)
 }
 
 func undoTask(task string, coll *mongo.Collection) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	id, _ := primitive.ObjectIDFromHex(task)
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": bson.M{"status": true}}
-	result, err := coll.UpdateOne(context.Background(), filter, update)
+	result, err := coll.UpdateOne(ctx, filter, update)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer cancel()
 	fmt.Println("Modified count", result.ModifiedCount)
 }
 
 func deleteOneTask(task string, coll *mongo.Collection) {
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 	id, _ := primitive.ObjectIDFromHex(task)
 	filter := bson.M{"_id": id}
-	deletedID, err := coll.DeleteOne(context.Background(), filter)
+	deletedID, err := coll.DeleteOne(ctx, filter)
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer cancel()
 	fmt.Println("Deleted Task: ", deletedID)
 }
 
 func deleteAllTask(coll *mongo.Collection) int64 {
-	deletedAll, err := coll.DeleteMany(context.Background(), bson.D{{}})
+	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	deletedAll, err := coll.DeleteMany(ctx, bson.D{{}})
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer cancel()
 	fmt.Println("Deleted All Tasks: ", deletedAll.DeletedCount)
 	return deletedAll.DeletedCount
 }

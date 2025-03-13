@@ -15,14 +15,16 @@ import (
 )
 
 func GetRecipe(c *fiber.Ctx) error {
-	payload := getAllCalories(database.DB.CalorieCollection)
+	uid := c.Locals("Uid").(string)
+	payload := getAllCalories(database.DB.CalorieCollection, uid)
 	return c.Status(fiber.StatusOK).JSON(payload)
 }
 
-func getAllCalories(calCol *mongo.Collection) []primitive.M {
+func getAllCalories(calCol *mongo.Collection, id string) []primitive.M {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
+	filter := bson.M{"user_id": id}
 
-	cursor, err := calCol.Find(ctx, bson.D{{}})
+	cursor, err := calCol.Find(ctx, filter)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -7,9 +7,10 @@ import (
 )
 
 type ToDoList struct {
-	ID     primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
-	Task   string             `json:"task,omitempty"`
-	Status bool               `json:"status,omitempty"`
+	ID      primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
+	Task    string             `json:"task,omitempty"`
+	Status  bool               `json:"status,omitempty"`
+	User_id string             `json:"user_id"`
 }
 type CalorieTracker struct {
 	ID          primitive.ObjectID `json:"_id,omitempty" bson:"_id,omitempty"`
@@ -17,6 +18,7 @@ type CalorieTracker struct {
 	Ingredients *string            `json:"ingredients"`
 	Calories    *int64             `json:"calories"`
 	Fat         *int64             `json:"fat"`
+	User_id     string             `json:"user_id"`
 }
 
 type User struct {
