@@ -25,7 +25,6 @@ func UpdatePassword(c *fiber.Ctx) error {
 		})
 	}
 
-	// Convert the userID string to ObjectID
 	objID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -33,7 +32,6 @@ func UpdatePassword(c *fiber.Ctx) error {
 		})
 	}
 
-	// First, fetch the user from the database
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -45,9 +43,6 @@ func UpdatePassword(c *fiber.Ctx) error {
 		})
 	}
 
-	// Now verify the current password
-	// Pass the hashed password from the database as userPassword
-	// Pass the plain text current password from the request as providedPassword
 	isValid, msg := controller.VerifyPassword(*user.Password, passwordUpdate.CurrentPassword)
 	if !isValid {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

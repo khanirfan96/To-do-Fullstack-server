@@ -94,7 +94,6 @@ func UpdateAllTokens(signedToken string, signedRefreshToken string, userId strin
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
-	// Check if UserCollection is initialized
 	if database.DB.UserCollection == nil {
 		return fmt.Errorf("user collection is not initialized")
 	}

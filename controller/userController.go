@@ -115,7 +115,6 @@ func Login() fiber.Handler {
 		ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 		defer cancel()
 
-		// Check if UserCollection is initialized
 		if database.DB.UserCollection == nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database not properly initialized"})
 		}
